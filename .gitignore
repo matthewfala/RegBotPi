@@ -1,0 +1,6 @@
+credentials.py
+CoursePlan.py
+.idea/*
+PieSetup/*
+venv2/*
+__pycache__/*
