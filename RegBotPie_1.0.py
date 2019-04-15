@@ -1,12 +1,30 @@
 # coding: utf-8
 
-# In[1]:
+# The Official Regbot v1.0 Code.
+#
+# Instructions for running the script
+#   1.) Modify credentials.py to contain username and password.
+#       Template:
+        #def get_username():
+        #  return "username"
+        #def get_password():
+        #    return "password"
+#   2.) Open CoursePlan.py
+#       The code is written such that:
+#            All sections in a combo element, called a bundle must be chosen at the same time.
+#                - combo.append(bundle) where bundle = [section1, section2, section3]
+#            Multiple bundles can be added to a combo array, smaller index combos are prioritized
+#                - combo.append(bundle2)
+#            Multiple combos can be stated as well. All combos must be appended to my_combos.
+#                - my_combos.append(combo1)
+#
+#       ##             math , math , pil
+        ##             lec  , disc , disc     ## professor
+            #combo1.append([39628, 39630, 49487])  ## Guillermo
+            #combo1.append([39628, 39629, 49487])  ## Guillermo
+            #combo1.append([39625, 39627, 49486])  ## Remigijus
+            #combo1.append([39625, 39626, 49486])  ## Remigijus
 
-
-# Beautiful Soup Tests
-
-
-# In[2]:
 
 
 from bs4 import BeautifulSoup
@@ -71,14 +89,18 @@ class course:
 
 # Returns session
 def usc_auth(username, password):
+    print("Starting Auth")
     s = requests.Session()
-    r = s.get('https://my.usc.edu/')
+    print("Got Session")
 
+    r = s.get('https://my.usc.edu/', verify=False)
+    print ("Request 1 success")
     enter_page = lxml.html.fromstring(r.content)
     form_1 = enter_page.xpath("//form[@name='form1']")
     # print form_1[0].attrib['action']
 
     Query = "https://shibboleth.usc.edu" + form_1[0].attrib['action']
+    print (Query)
     # print Query
     payload = {'_eventId_proceed': '', 'shib_idp_ls_exception.shib_idp_persistent_ss': '',
                'shib_idp_ls_exception.shib_idp_session_ss': '',
@@ -107,6 +129,7 @@ def usc_auth(username, password):
     login = s.post('https://my.usc.edu/portal/Shibboleth.sso/SAML2/POST', payload)
 
     print("Are We Logged In? : " + str(username in login.text))
+
     if username not in login.text:
         raise Exception("Login Error")
     return s
@@ -120,7 +143,7 @@ import os
 import re
 
 pickle_file = 'my_usc_session.pkl'
-term = 'spring'  # Options, Spring Fall Summer
+term = Settings.term
 
 home = 'https://my.usc.edu/'
 webreg_connect = 'https://my.usc.edu/portal/oasis/webregbridge.php'
@@ -153,7 +176,13 @@ def webreg_login():
         print("Recovery failed.")
         s = new_saved_session(pickle_file)
 
-    terms_page = s.get(webreg_connect)
+    print("Getting webreg connect")
+    #headers=
+    try:
+        terms_page = s.get(webreg_connect, verify=False)
+    except requests.exceptions.RequestException as e:
+        print(e)
+
 
     session_end_phrase = 'Your session has ended.'
     session_ended = session_end_phrase in terms_page.text
@@ -403,8 +432,12 @@ class registrar:
 
             # comboset = [ [c,c,c], [c,c,c] ]
             all_combo_sections = set();
+
             for combo in comboset:
                 for sec in combo:
+                    print("Combo " + str(combo) + ": " + str(sec))
+                    print(report)
+                    print(report[int(sec)])
                     all_combo_sections.add(report[int(sec)])
                     # print("Combo " + str(combo) + ": " + str(sec))
             # print(str(all_combo_sections))
@@ -412,7 +445,6 @@ class registrar:
             combo_found = False
             combo_register = set()
             for combo in comboset:
-
                 combo_satisfied = True
                 for sec in combo:
 
