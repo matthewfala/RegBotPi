@@ -26,6 +26,10 @@
             #combo1.append([39625, 39626, 49486])  ## Remigijus
 
 
+## Vulnerability notes:
+# This script is vulnerable to middle-man attacks.
+#   USC's Webreg site lacks a valid certificate. Because of this, requests cannot verify the certificate properly
+#   Thus, as a hacky fix, I set verify=False in the requests.
 
 from bs4 import BeautifulSoup
 import lxml
@@ -33,6 +37,10 @@ from lxml import html
 import requests
 import CoursePlan
 import Settings
+
+# Suppress Certificate Errors
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # In[3]:
 
@@ -93,7 +101,7 @@ def usc_auth(username, password):
     s = requests.Session()
     print("Got Session")
 
-    r = s.get('https://my.usc.edu/', verify=False)
+    r = s.get('https://my.usc.edu/', verify=Settings.verify_certificate)
     print ("Request 1 success")
     enter_page = lxml.html.fromstring(r.content)
     form_1 = enter_page.xpath("//form[@name='form1']")
@@ -176,10 +184,8 @@ def webreg_login():
         print("Recovery failed.")
         s = new_saved_session(pickle_file)
 
-    print("Getting webreg connect")
-    #headers=
     try:
-        terms_page = s.get(webreg_connect, verify=False)
+        terms_page = s.get(webreg_connect, verify=Settings.verify_certificate)
     except requests.exceptions.RequestException as e:
         print(e)
 
@@ -435,9 +441,6 @@ class registrar:
 
             for combo in comboset:
                 for sec in combo:
-                    print("Combo " + str(combo) + ": " + str(sec))
-                    print(report)
-                    print(report[int(sec)])
                     all_combo_sections.add(report[int(sec)])
                     # print("Combo " + str(combo) + ": " + str(sec))
             # print(str(all_combo_sections))
@@ -482,6 +485,7 @@ class registrar:
         # console output
         if len(reg) == 0 and len(drop) == 0:
             print("Course plan is currently optimal.")
+            return
         if len(reg) > 0:
             print("Registering for Courses: " + str(list(reg)))
         if len(drop) > 0:
@@ -492,6 +496,8 @@ class registrar:
     def attempt_reg(self, s, reg_courses, drop_courses, all_courses):
 
         # setup
+        print("")
+        print("Simplifying Schedule.")
         change_log = simplify_schedule(s, all_courses)
         reg_needed = False
 
@@ -517,6 +523,8 @@ class registrar:
         # cleanup
         # print("Reg Courses Size: " + str(len(reg_courses)))
 
+        print("")
+        print("Restoring Schedule.")
         restore_schedule(s, change_log, reg_courses)
 
     def find_courses(self, all_courses, sections):
