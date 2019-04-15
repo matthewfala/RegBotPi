@@ -97,18 +97,14 @@ class course:
 
 # Returns session
 def usc_auth(username, password):
-    print("Starting Auth")
     s = requests.Session()
-    print("Got Session")
-
     r = s.get('https://my.usc.edu/', verify=Settings.verify_certificate)
-    print ("Request 1 success")
     enter_page = lxml.html.fromstring(r.content)
     form_1 = enter_page.xpath("//form[@name='form1']")
     # print form_1[0].attrib['action']
 
     Query = "https://shibboleth.usc.edu" + form_1[0].attrib['action']
-    print (Query)
+
     # print Query
     payload = {'_eventId_proceed': '', 'shib_idp_ls_exception.shib_idp_persistent_ss': '',
                'shib_idp_ls_exception.shib_idp_session_ss': '',
